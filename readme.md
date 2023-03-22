@@ -12,7 +12,7 @@ This is a simple example of how to authenticate users using MySQL, Node.js, and 
 1. Clone this repository:
 
 ```bash
-git clone https://github.com/your-username/mysql-auth-nodejs-sequelize.git
+git clone https://github.com/vinodjarare/mysql-auth.git
 ```
 
 2. Install dependencies:
