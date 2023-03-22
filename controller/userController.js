@@ -37,7 +37,7 @@ exports.login = asyncError(async (req, res, next) => {
   }
 
   const token = jwt.sign(
-    { id: user.id, isAdmin: user.role },
+    { id: user.id, role: user.role },
     process.env.JWT_SEC,
     { expiresIn: process.env.JWT_EXP }
   );
@@ -58,13 +58,41 @@ exports.forgetPassword = asyncError(async (req, res, next) => {
 
   const otp = Math.floor(Math.random() * 1000000 + 1);
 
-  // const resetPasswordTokenExpiration = Date.now() * 1000 * 60 * 30;
+  const otpExpire = new Date(Date.now() + 1000 * 60 * 10);
+  console.log(otpExpire);
+  const resetToken = await User.update(
+    {
+      otp,
+      otpExpire,
+    },
+    { where: { email } }
+  );
 
-  // const resetToken = await User.update(
-  //   {
-  //     resetPasswordToken: otp,
-  //     resetPasswordTokenExpiration,
-  //   },
-  //   { where: { email } }
-  // );
+  res.status(200).json({ success: true, message: "Otp sent to your email" });
+});
+
+exports.resetPassword = asyncError(async (req, res, next) => {
+  const { email, otp, password } = req.body;
+  const otpToken = parseInt(otp);
+  if (!email || !otp || !password) {
+    return next(new ErrorHandler("Invalid credential", 400));
+  }
+
+  const user = await User.findOne({ where: { email } });
+  console.log(otpToken, user?.otp);
+  const date1 = new Date(Date.now());
+  const date2 = new Date(user?.otpExpire);
+  if (otpToken !== user?.otp || date1 > date2) {
+    return next(new ErrorHandler("Invalid otp", 400));
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const newUser = await User.update(
+    { password: hashedPassword },
+    { where: { email } }
+  );
+  res
+    .status(200)
+    .json({ success: true, message: "new password created successfully" });
 });

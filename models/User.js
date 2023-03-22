@@ -26,10 +26,10 @@ const User = sequelize.define(
       type: DataTypes.ENUM("user", "admin"),
       defaultValue: "user",
     },
-    resetPasswordToken: {
+    otp: {
       type: DataTypes.INTEGER,
     },
-    resetPasswordTokenExpiration: {
+    otpExpire: {
       type: DataTypes.DATE,
     },
   },
