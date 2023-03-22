@@ -96,3 +96,58 @@ exports.resetPassword = asyncError(async (req, res, next) => {
     .status(200)
     .json({ success: true, message: "new password created successfully" });
 });
+
+exports.updateUser = asyncError(async (req, res, next) => {
+  const { name, email } = req.body;
+  if (!name || !email) return next(new ErrorHandler("Invalid input", 403));
+
+  const user = await User.update(
+    { name, email },
+    { where: { email: req.user.email } }
+  );
+  res
+    .status(200)
+    .json({ success: true, message: "user details updated successfully" });
+});
+
+exports.deleteUser = asyncError(async (req, res, next) => {
+  const user = await User.destroy({ where: { email: req.user.email } });
+  res.status(200).json({ success: true, message: "user deleted successfully" });
+});
+
+exports.updatePassword = asyncError(async (req, res, next) => {
+  const { oldpassword, newpassword, confirmpassword } = req.body;
+  if (!oldpassword || !newpassword || !confirmpassword)
+    return next(new ErrorHandler("all fields are mandatory", 400));
+  const user = await User.findOne({ where: { email: req.user.email } });
+
+  const comparedPassword = await bcrypt.compare(oldpassword, user.password);
+  if (!comparedPassword) return next(new ErrorHandler("Invalid password", 403));
+
+  if (newpassword !== confirmpassword)
+    return next(
+      new ErrorHandler("new password and confirm password should be same", 403)
+    );
+
+  const hashedPassword = await bcrypt.hash(newpassword, 10);
+
+  const updatedUser = await User.update(
+    { password: hashedPassword },
+    { where: { email: req.user.email } }
+  );
+
+  res
+    .status(200)
+    .json({ success: true, message: "password updated successfully" });
+});
+
+exports.getProfile = asyncError(async (req, res, next) => {
+  const user = await User.findOne({ where: { email: req.user.email } });
+  if (!user) return next(new ErrorHandler("user not found", 404));
+  res.status(200).json(user);
+});
+
+exports.getAllUsers = asyncError(async (req, res, next) => {
+  const users = await User.findAll();
+  res.status(200).json({ success: true, users });
+});
